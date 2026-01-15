@@ -1,0 +1,39 @@
+package com.ey.enums;
+
+public enum ApiErrorCode {
+
+    // General
+    VALIDATION_FAILED,
+    AUTH_REQUIRED,
+    ACCESS_DENIED,
+
+    // Auth
+    INVALID_CREDENTIALS,
+    ACCOUNT_LOCKED,
+    EMAIL_INVALID,
+    EMAIL_TAKEN,
+    TOKEN_INVALID,
+    TOKEN_EXPIRED,
+
+    // Users
+    USER_NOT_FOUND,
+
+    // Brands
+    BRAND_NOT_FOUND,
+    BRAND_EXISTS,
+    BRAND_IN_USE,
+    ALREADY_ACTIVE,
+
+    // Laptops
+    LAPTOP_NOT_FOUND,
+    SERIAL_EXISTS,
+    INSUFFICIENT_STOCK,
+
+    // Cart / Orders
+    CART_ITEM_NOT_FOUND,
+    ORDER_NOT_FOUND,
+    CANNOT_CANCEL,
+
+    // System
+    INTERNAL_ERROR
+}
