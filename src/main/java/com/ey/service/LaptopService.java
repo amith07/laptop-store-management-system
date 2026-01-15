@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ey.dto.request.LaptopCreateRequest;
+import com.ey.dto.request.LaptopSearchRequest;
 import com.ey.dto.request.LaptopStockUpdateRequest;
 import com.ey.dto.request.LaptopUpdateRequest;
 import com.ey.dto.response.LaptopResponse;
@@ -18,6 +19,7 @@ import com.ey.model.Brand;
 import com.ey.model.Laptop;
 import com.ey.repository.BrandRepository;
 import com.ey.repository.LaptopRepository;
+import com.ey.repository.spec.LaptopSpecification;
 
 @Service
 @Transactional
@@ -36,9 +38,11 @@ public class LaptopService {
 	 */
 	public LaptopResponse createLaptop(LaptopCreateRequest request) {
 
+		// Validate brand FIRST
 		Brand brand = brandRepository.findByIdAndDeletedAtIsNull(request.getBrandId()).orElseThrow(
 				() -> new ApiException(ApiErrorCode.BRAND_NOT_FOUND, HttpStatus.NOT_FOUND, "Brand not found"));
 
+		// Validate serial
 		if (laptopRepository.existsBySerialNumber(request.getSerialNumber())) {
 			throw new ApiException(ApiErrorCode.SERIAL_EXISTS, HttpStatus.CONFLICT, "Serial number already exists");
 		}
@@ -60,11 +64,21 @@ public class LaptopService {
 	}
 
 	/*
-	 * ============================ READ ============================
+	 * ============================ READ (PUBLIC) ============================
 	 */
 	@Transactional(readOnly = true)
 	public Page<LaptopResponse> getLaptops(Pageable pageable) {
-		return laptopRepository.findAllByDeletedAtIsNull(pageable).map(this::toResponse);
+		return laptopRepository.findAll(LaptopSpecification.build(null, null, null, null, null), pageable)
+				.map(this::toResponse);
+	}
+
+	/*
+	 * ============================ SEARCH / FILTER ============================
+	 */
+	@Transactional(readOnly = true)
+	public Page<LaptopResponse> searchLaptops(LaptopSearchRequest request, Pageable pageable) {
+		return laptopRepository.findAll(LaptopSpecification.build(request.getBrandId(), request.getCpu(),
+				request.getMinPrice(), request.getMaxPrice(), request.getStatus()), pageable).map(this::toResponse);
 	}
 
 	/*
@@ -92,6 +106,7 @@ public class LaptopService {
 		if (request.getPromotionalPrice() != null)
 			laptop.setPromotionalPrice(request.getPromotionalPrice());
 
+		// 🔴 Force recalculation for response correctness
 		laptop.computeEffectivePrice();
 		laptop.updateStatus();
 
@@ -108,6 +123,7 @@ public class LaptopService {
 
 		laptop.setStock(request.getStock());
 
+		// 🔴 Force status recalculation
 		laptop.updateStatus();
 
 		return toResponse(laptop);

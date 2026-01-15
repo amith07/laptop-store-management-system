@@ -37,8 +37,12 @@ public class SecurityConfig {
 				// ============================
 				.authorizeHttpRequests(auth -> auth
 
-						// ---- PUBLIC READ APIs ----
+						// ============================
+						// PUBLIC READ APIs
+						// ============================
 						.requestMatchers(HttpMethod.GET, "/api/brands/**", "/api/laptops/**").permitAll()
+
+						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
 						// ---- PUBLIC SYSTEM ENDPOINTS ----
 						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")

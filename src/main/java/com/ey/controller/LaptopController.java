@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ey.dto.request.LaptopCreateRequest;
+import com.ey.dto.request.LaptopSearchRequest;
 import com.ey.dto.request.LaptopStockUpdateRequest;
 import com.ey.dto.request.LaptopUpdateRequest;
 import com.ey.dto.response.LaptopResponse;
@@ -90,4 +91,12 @@ public class LaptopController {
 		laptopService.restoreLaptop(id);
 		return ResponseEntity.ok().build();
 	}
+
+	@PreAuthorize("permitAll()")
+	@PostMapping("/search")
+	public ResponseEntity<Page<LaptopResponse>> searchLaptops(@RequestBody LaptopSearchRequest request,
+			Pageable pageable) {
+		return ResponseEntity.ok(laptopService.searchLaptops(request, pageable));
+	}
+
 }
