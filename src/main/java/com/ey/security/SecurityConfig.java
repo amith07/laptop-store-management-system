@@ -67,6 +67,9 @@ public class SecurityConfig {
 
 				User.withUsername("admin").password("{noop}admin123").roles("ADMIN").build(),
 
-				User.withUsername("manager").password("{noop}manager123").roles("MANAGER").build());
+				User.withUsername("manager").password("{noop}manager123").roles("MANAGER").build(),
+
+				User.withUsername("customer1").password("{noop}customer123").roles("CUSTOMER").build());
 	}
+
 }
