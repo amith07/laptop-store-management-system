@@ -1,206 +1,129 @@
 # Laptop Store Management System
 
-A Spring Boot–based RESTful backend application for managing a laptop e-commerce platform.  
-The system supports product browsing, cart management, order placement, and payment initiation with role-based security.
+## Overview
+Laptop Store Management System is a Spring Boot RESTful application designed to manage an online laptop store with role-based access control. The system supports brand and laptop management, cart operations, order lifecycle handling, and payment initiation.
+
+This project is structured and implemented following enterprise-grade best practices suitable for capstone projects and interviews.
 
 ---
 
 ## Tech Stack
-
 - Java 17
-- Spring Boot 3.5.x
-- Spring Web
+- Spring Boot 3.x
 - Spring Data JPA
 - Spring Security
 - MySQL
-- MapStruct
-- Log4j2
 - Maven
-
----
-
-## Project Structure
-
-```
-com.ey
-├── config
-├── controller
-├── dto
-│   ├── request
-│   └── response
-├── enums
-├── exception
-├── mapper
-├── model
-├── repository
-├── security
-└── service
-```
+- Postman (for API testing)
 
 ---
 
 ## Roles & Access Control
 
-| Role      | Permissions |
-|-----------|------------|
-| ADMIN     | Manage brands and laptops |
-| CUSTOMER  | Cart, orders, checkout, payments |
-| PUBLIC    | View laptops and search |
+| Role | Description |
+|-----|------------|
+| CUSTOMER | Browse laptops, manage cart, place & cancel orders |
+| MANAGER | Manage order processing (view pending orders, lifecycle actions) |
+| ADMIN | Full access including manager-level endpoints |
 
-Authentication currently uses **Basic Authentication (in-memory users)** for development.
+> Admin access to manager endpoints is explicitly allowed using `hasAnyRole('MANAGER','ADMIN')`.
 
 ---
 
-## Modules Implemented
+## Implemented Modules
 
 ### 1. Brand Module
-- Add brand (ADMIN)
-- View all brands (PUBLIC)
-- Duplicate brand name validation
+- Create brand (ADMIN)
+- List brands (PUBLIC)
+- Delete brand (ADMIN)
 
 ### 2. Laptop Module
 - Add / update / delete laptops (ADMIN)
-- Public laptop listing
-- Advanced search:
-  - Brand
-  - Price range
-  - CPU
-  - Availability status
-- Stock and price management
+- Public laptop search & listing
+- Stock management during checkout
 
 ### 3. Cart Module
-- Add laptop to cart
-- Update cart item quantity
-- Remove item from cart
-- View current cart
-- Validations:
-  - Empty cart
-  - Stock availability
+- Add laptop to cart (CUSTOMER)
+- Update quantity
+- Remove item
+- View cart
 
-### 4. Order Module
-- Checkout cart to create order
-- View customer orders
-- Cancel order (only if not completed)
-- Order items store price snapshot at purchase time
+### 4. Order Module (Lifecycle Implemented)
+- Checkout cart → creates order
+- Order statuses:
+  - CREATED
+  - COMPLETED
+  - CANCELLED
+- Cancel order (only valid for COMPLETED orders)
+- Restore stock on cancellation
+- View order history (CUSTOMER)
 
 ### 5. Payment Module
-- Initiate payment for an order
-- Payment endpoint is **POST-only**
-- GET requests are intentionally not supported
+- Payment initiation endpoint
+- GET methods intentionally not exposed for payments
+- Payment confirmation to be added next
 
 ---
 
-## API Endpoints
-
-### Public Endpoints
-```
-GET /api/laptops
-GET /api/laptops/search
-GET /api/brands
-```
-
-### Admin Endpoints
-```
-POST   /api/brands
-POST   /api/laptops
-PUT    /api/laptops/{id}
-DELETE /api/laptops/{id}
-```
-
-### Customer – Cart
-```
-POST   /api/cart/add
-PUT    /api/cart/update
-DELETE /api/cart/remove/{itemId}
-GET    /api/cart
-```
-
-### Customer – Orders
-```
-POST /api/orders/checkout
-GET  /api/orders
-POST /api/orders/{orderId}/cancel
-```
-
-### Customer – Payments
-```
-POST /api/payments/orders/{orderId}
-```
+## Order Lifecycle Rules
+- Cart checkout creates an order
+- Stock is reduced at checkout
+- Only COMPLETED orders can be cancelled
+- Cancelling restores laptop stock
+- Invalid transitions are blocked via business rules
 
 ---
 
-## Security
-
-- Role-based authorization using `@PreAuthorize`
-- Unauthorized access → `401 Unauthorized`
-- Forbidden access → `403 Forbidden`
-- Unsupported HTTP method → `405 Method Not Allowed`
-
----
-
-## Exception Handling
-
-- Centralized `GlobalExceptionHandler`
-- Handles:
-  - Resource not found
-  - Invalid IDs
-  - Empty cart
-  - Out-of-stock items
-  - Duplicate entities
-  - Unsupported HTTP methods
+## Security Highlights
+- HTTP Basic Authentication (current)
+- Role-based endpoint protection using `@PreAuthorize`
+- Explicit access control (no implicit role hierarchy)
+- Clear separation between public and secured APIs
 
 ---
 
-## How to Test Using Postman
+## API Testing (Postman)
 
-1. Authenticate using **Basic Auth**
-   - CUSTOMER for cart/orders/payments
-   - ADMIN for brands/laptops
-2. Create brands and laptops (ADMIN)
-3. Search laptops (PUBLIC)
-4. Add laptops to cart (CUSTOMER)
-5. Checkout cart to create order
-6. Initiate payment using POST endpoint
+### Customer Flow
+1. GET `/api/brands`
+2. GET `/api/laptops`
+3. POST `/api/cart/add`
+4. POST `/api/orders/checkout`
+5. GET `/api/orders`
+6. POST `/api/orders/{id}/cancel`
 
----
-
-## Database
-
-- MySQL
-- JPA/Hibernate for ORM
-- Relationships:
-  - Brand → Laptops
-  - Cart → CartItems → Laptop
-  - Order → OrderItems → Laptop
-  - Order → Payment
-
----
-
-## Logging
-
-- Log4j2 enabled
-- Logs important application events:
-  - Order creation
-  - Payment initiation
-  - Validation failures
+### Manager / Admin Flow
+1. GET `/api/manager/orders`
+2. Process lifecycle actions (next phase)
 
 ---
 
 ## Current Status
-
-✔ Brand Module  
-✔ Laptop Module  
-✔ Cart Module  
-✔ Order Module  
-✔ Payment Initiation  
-✔ Security & Exception Handling  
+✔ Brand Management  
+✔ Laptop Management  
+✔ Cart Management  
+✔ Order Lifecycle (Create / Cancel)  
+✔ Role-based Security  
+✔ Global Exception Handling  
 
 ---
 
-## Planned Enhancements
+## Next Planned Enhancements
+- Payment confirmation & verification
+- Order shipping & delivery lifecycle
+- Mapper layer refactor (`com.ey.mapper`)
+- Unit & integration tests
+- JWT authentication (optional)
+- Admin analytics endpoints
 
-- JWT authentication
-- Payment status updates
-- Admin order management
-- Pagination & sorting
-- Unit and integration tests
+---
+
+## Notes
+- GET requests are intentionally not allowed for payment actions
+- All business validations are enforced at service layer
+- Designed to be extensible and interview-ready
+
+---
+
+## Author
+Capstone Project – Laptop Store Management System

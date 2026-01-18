@@ -35,9 +35,8 @@ public class OrderService {
 		this.laptopRepository = laptopRepository;
 	}
 
-	/*
-	 * ============================ CHECKOUT ============================
-	 */
+	/* ============================ CHECKOUT ============================ */
+
 	public OrderResponse checkout(String username) {
 
 		Cart cart = cartRepository.findByUsernameAndCheckedOutFalse(username)
@@ -63,6 +62,7 @@ public class OrderService {
 
 			// Reduce stock
 			laptop.setStock(laptop.getStock() - cartItem.getQuantity());
+			laptopRepository.save(laptop);
 
 			OrderItem item = new OrderItem();
 			item.setOrder(order);
@@ -75,24 +75,24 @@ public class OrderService {
 		}
 
 		cart.setCheckedOut(true);
+
+		// Payment successful → order completed
 		order.setStatus(OrderStatus.COMPLETED);
 
-		Order saved = orderRepository.save(order);
-
-		return toResponse(saved);
+		return toResponse(orderRepository.save(order));
 	}
+
+	/* ============================ CANCEL ORDER ============================ */
 
 	public OrderResponse cancelOrder(String username, Long orderId) {
 
 		Order order = orderRepository.findById(orderId).orElseThrow(
 				() -> new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found"));
 
-		// Ensure user owns the order
 		if (!order.getUsername().equals(username)) {
 			throw new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found");
 		}
 
-		// Only COMPLETED orders can be cancelled
 		if (order.getStatus() != OrderStatus.COMPLETED) {
 			throw new ApiException(ApiErrorCode.ORDER_CANNOT_BE_CANCELLED, HttpStatus.CONFLICT,
 					"Order cannot be cancelled");
@@ -102,6 +102,7 @@ public class OrderService {
 		order.getItems().forEach(item -> {
 			Laptop laptop = item.getLaptop();
 			laptop.setStock(laptop.getStock() + item.getQuantity());
+			laptopRepository.save(laptop);
 		});
 
 		order.setStatus(OrderStatus.CANCELLED);
@@ -109,9 +110,8 @@ public class OrderService {
 		return toResponse(order);
 	}
 
-	/*
-	 * ============================ ORDER HISTORY ============================
-	 */
+	/* ============================ ORDER HISTORY ============================ */
+
 	@Transactional(readOnly = true)
 	public java.util.List<OrderResponse> getOrders(String username) {
 
@@ -119,9 +119,8 @@ public class OrderService {
 				.collect(Collectors.toList());
 	}
 
-	/*
-	 * ============================ MAPPER ============================
-	 */
+	/* ============================ MAPPER ============================ */
+
 	private OrderResponse toResponse(Order order) {
 
 		return new OrderResponse(order.getId(), order.getStatus(), order.getTotalAmount(), order.getCreatedAt(),
@@ -130,4 +129,23 @@ public class OrderService {
 								i.getQuantity(), i.getPriceAtPurchase(), i.getSubTotal()))
 						.collect(Collectors.toList()));
 	}
+
+	/* ============================ ADMIN ============================ */
+
+	@Transactional(readOnly = true)
+	public java.util.List<OrderResponse> getAllOrders() {
+
+		return orderRepository.findAllByOrderByCreatedAtDesc().stream().map(this::toResponse)
+				.collect(java.util.stream.Collectors.toList());
+	}
+
+	/* ============================ MANAGER ============================ */
+
+	@Transactional(readOnly = true)
+	public java.util.List<OrderResponse> getOrdersByStatus(OrderStatus status) {
+
+		return orderRepository.findByStatusOrderByCreatedAtDesc(status).stream().map(this::toResponse)
+				.collect(java.util.stream.Collectors.toList());
+	}
+
 }
