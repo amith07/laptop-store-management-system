@@ -1,169 +1,206 @@
-# 🖥️ Laptop Store Management System
+# Laptop Store Management System
 
 A Spring Boot–based RESTful backend application for managing a laptop e-commerce platform.  
-The system supports catalog management, advanced search, cart operations, and a complete order lifecycle.
-
-This project is developed as a **capstone-level backend system**, following clean architecture and enterprise best practices.
+The system supports product browsing, cart management, order placement, and payment initiation with role-based security.
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
-- **Java:** 17  
-- **Spring Boot:** 3.5.x  
-- **Spring Web**
-- **Spring Data JPA**
-- **Spring Security**
-- **Hibernate**
-- **MySQL**
-- **Maven**
-- **Postman** (API testing)
-
----
-
-## 📦 Modules Implemented
-
-### 1️⃣ Brand Management
-- Create and list brands
-- Soft delete support
-- Centralized validation and exception handling
-- Public read access
+- Java 17
+- Spring Boot 3.5.x
+- Spring Web
+- Spring Data JPA
+- Spring Security
+- MySQL
+- MapStruct
+- Log4j2
+- Maven
 
 ---
 
-### 2️⃣ Laptop Management
-- Create laptops under brands
-- Update laptop specifications and pricing
-- Independent stock management
-- Soft delete and restore laptops
-- Automatic status calculation:
-  - `AVAILABLE`
-  - `OUT_OF_STOCK`
+## Project Structure
+
+```
+com.ey
+├── config
+├── controller
+├── dto
+│   ├── request
+│   └── response
+├── enums
+├── exception
+├── mapper
+├── model
+├── repository
+├── security
+└── service
+```
+
+---
+
+## Roles & Access Control
+
+| Role      | Permissions |
+|-----------|------------|
+| ADMIN     | Manage brands and laptops |
+| CUSTOMER  | Cart, orders, checkout, payments |
+| PUBLIC    | View laptops and search |
+
+Authentication currently uses **Basic Authentication (in-memory users)** for development.
+
+---
+
+## Modules Implemented
+
+### 1. Brand Module
+- Add brand (ADMIN)
+- View all brands (PUBLIC)
+- Duplicate brand name validation
+
+### 2. Laptop Module
+- Add / update / delete laptops (ADMIN)
 - Public laptop listing
-- Role-based access for write operations
-
----
-
-### 3️⃣ Search & Filters
-- Dynamic laptop search using JPA Specifications
-- Filter by:
+- Advanced search:
   - Brand
-  - CPU
   - Price range
+  - CPU
   - Availability status
-- Pagination and sorting support
-- Publicly accessible search API (no authentication required)
+- Stock and price management
 
----
-
-### 4️⃣ Cart Module (Complete)
-- One active cart per customer
+### 3. Cart Module
 - Add laptop to cart
-- Merge quantities for the same laptop
 - Update cart item quantity
 - Remove item from cart
-- Stock validation during add and update
-- Price snapshot preserved at add-to-cart time
-- Automatic subtotal and cart total recalculation
-- Persistent cart storage
+- View current cart
+- Validations:
+  - Empty cart
+  - Stock availability
+
+### 4. Order Module
+- Checkout cart to create order
+- View customer orders
+- Cancel order (only if not completed)
+- Order items store price snapshot at purchase time
+
+### 5. Payment Module
+- Initiate payment for an order
+- Payment endpoint is **POST-only**
+- GET requests are intentionally not supported
 
 ---
 
-### 5️⃣ Order & Checkout Module
-- Checkout active cart
-- Convert cart into immutable order
-- Snapshot pricing at checkout
-- Reduce laptop stock during checkout
-- Prevent checkout of empty or already-checked-out carts
-- View customer order history
-- Orders sorted by latest first
+## API Endpoints
+
+### Public Endpoints
+```
+GET /api/laptops
+GET /api/laptops/search
+GET /api/brands
+```
+
+### Admin Endpoints
+```
+POST   /api/brands
+POST   /api/laptops
+PUT    /api/laptops/{id}
+DELETE /api/laptops/{id}
+```
+
+### Customer – Cart
+```
+POST   /api/cart/add
+PUT    /api/cart/update
+DELETE /api/cart/remove/{itemId}
+GET    /api/cart
+```
+
+### Customer – Orders
+```
+POST /api/orders/checkout
+GET  /api/orders
+POST /api/orders/{orderId}/cancel
+```
+
+### Customer – Payments
+```
+POST /api/payments/orders/{orderId}
+```
 
 ---
 
-### 6️⃣ Order Cancellation
-- Cancel completed orders only
-- Restore laptop stock on cancellation
-- Prevent double cancellation
-- Enforce order ownership
-- Maintain order lifecycle integrity
+## Security
+
+- Role-based authorization using `@PreAuthorize`
+- Unauthorized access → `401 Unauthorized`
+- Forbidden access → `403 Forbidden`
+- Unsupported HTTP method → `405 Method Not Allowed`
 
 ---
 
-## 🔐 Security & Roles
+## Exception Handling
 
-The application currently uses **Spring Security with Basic Authentication** (temporary setup).
-
-### Roles Implemented
-
-| Role | Permissions |
-|----|----|
-| ADMIN | Full access (brands, laptops) |
-| MANAGER | Stock update operations |
-| CUSTOMER | Cart and order operations |
-| PUBLIC | Laptop listing and search |
-
-### Test Users (In-Memory)
-
-| Username | Password | Role |
-|--------|----------|------|
-| admin | admin123 | ADMIN |
-| manager | manager123 | MANAGER |
-| customer1 | customer123 | CUSTOMER |
+- Centralized `GlobalExceptionHandler`
+- Handles:
+  - Resource not found
+  - Invalid IDs
+  - Empty cart
+  - Out-of-stock items
+  - Duplicate entities
+  - Unsupported HTTP methods
 
 ---
 
-## 🧪 API Testing
+## How to Test Using Postman
 
-- All APIs tested using **Postman**
-- Public endpoints do not require authentication
-- Protected endpoints enforce role-based access
-- Clear request/response contracts with proper HTTP status codes
-
----
-
-## ⚠️ Error Handling
-
-- Centralized global exception handling
-- Domain-specific error codes:
-  - `BRAND_NOT_FOUND`
-  - `LAPTOP_NOT_FOUND`
-  - `SERIAL_EXISTS`
-  - `INSUFFICIENT_STOCK`
-  - `CART_EMPTY`
-  - `CART_ITEM_NOT_FOUND`
-  - `ORDER_NOT_FOUND`
-  - `ORDER_CANNOT_BE_CANCELLED`
-- Proper HTTP status mapping:
-  - `400 Bad Request`
-  - `401 Unauthorized`
-  - `403 Forbidden`
-  - `404 Not Found`
-  - `409 Conflict`
+1. Authenticate using **Basic Auth**
+   - CUSTOMER for cart/orders/payments
+   - ADMIN for brands/laptops
+2. Create brands and laptops (ADMIN)
+3. Search laptops (PUBLIC)
+4. Add laptops to cart (CUSTOMER)
+5. Checkout cart to create order
+6. Initiate payment using POST endpoint
 
 ---
 
-## 📌 Current Status
+## Database
 
-✅ Brand module completed  
-✅ Laptop lifecycle fully implemented  
-✅ Public search and filtering enabled  
-✅ Cart lifecycle fully implemented  
-✅ Checkout and order module completed  
-✅ Order cancellation with inventory rollback implemented  
-
----
-
-## 🔜 Planned Enhancements
-
-- Payment simulation
-- JWT-based authentication
-- Unit and integration testing
-- Swagger / OpenAPI documentation
-- Deployment configuration
+- MySQL
+- JPA/Hibernate for ORM
+- Relationships:
+  - Brand → Laptops
+  - Cart → CartItems → Laptop
+  - Order → OrderItems → Laptop
+  - Order → Payment
 
 ---
 
-## 👨‍💻 Author
+## Logging
 
-**Amith R**  
-Capstone Project – Laptop Store Management System  
+- Log4j2 enabled
+- Logs important application events:
+  - Order creation
+  - Payment initiation
+  - Validation failures
+
+---
+
+## Current Status
+
+✔ Brand Module  
+✔ Laptop Module  
+✔ Cart Module  
+✔ Order Module  
+✔ Payment Initiation  
+✔ Security & Exception Handling  
+
+---
+
+## Planned Enhancements
+
+- JWT authentication
+- Payment status updates
+- Admin order management
+- Pagination & sorting
+- Unit and integration tests
