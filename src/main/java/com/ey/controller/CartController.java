@@ -2,6 +2,7 @@ package com.ey.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,14 +29,17 @@ public class CartController {
 		this.cartService = cartService;
 	}
 
-	// TEMP: mocked user (JWT later)
+	/**
+	 * Extract authenticated username from SecurityContext
+	 */
 	private String currentUser() {
-		return "customer1";
+		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 
 	@PreAuthorize("hasRole('CUSTOMER')")
 	@PostMapping("/items")
 	public ResponseEntity<CartResponse> addToCart(@Valid @RequestBody AddToCartRequest request) {
+
 		return ResponseEntity.ok(cartService.addToCart(currentUser(), request));
 	}
 
@@ -43,18 +47,21 @@ public class CartController {
 	@PatchMapping("/items/{laptopId}")
 	public ResponseEntity<CartResponse> updateItemQuantity(@PathVariable Long laptopId,
 			@Valid @RequestBody UpdateCartItemRequest request) {
+
 		return ResponseEntity.ok(cartService.updateItemQuantity(currentUser(), laptopId, request));
 	}
 
 	@PreAuthorize("hasRole('CUSTOMER')")
 	@DeleteMapping("/items/{laptopId}")
 	public ResponseEntity<CartResponse> removeItem(@PathVariable Long laptopId) {
+
 		return ResponseEntity.ok(cartService.removeItem(currentUser(), laptopId));
 	}
 
 	@PreAuthorize("hasRole('CUSTOMER')")
 	@GetMapping
 	public ResponseEntity<CartResponse> getCart() {
+
 		return ResponseEntity.ok(cartService.getCart(currentUser()));
 	}
 }

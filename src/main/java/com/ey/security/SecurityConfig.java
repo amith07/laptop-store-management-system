@@ -3,18 +3,19 @@ package com.ey.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
 	@Bean
@@ -22,7 +23,7 @@ public class SecurityConfig {
 
 		http
 				// ============================
-				// CSRF
+				// CSRF (Disabled for REST)
 				// ============================
 				.csrf(csrf -> csrf.disable())
 
@@ -44,32 +45,38 @@ public class SecurityConfig {
 
 						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
-						// ---- PUBLIC SYSTEM ENDPOINTS ----
+						// ============================
+						// PUBLIC SYSTEM ENDPOINTS
+						// ============================
 						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 						.permitAll()
 
-						// ---- WRITE APIs REQUIRE AUTH ----
+						// ============================
+						// WRITE APIs REQUIRE AUTH
+						// ============================
 						.requestMatchers("/api/brands/**", "/api/laptops/**").authenticated()
 
-						// ---- EVERYTHING ELSE ----
+						// ============================
+						// EVERYTHING ELSE
+						// ============================
 						.anyRequest().authenticated());
 
 		return http.build();
 	}
 
 	/**
-	 * TEMPORARY in-memory users (Will be replaced by JWT later)
+	 * BCrypt password encoder Used by CustomUserDetailsService
 	 */
 	@Bean
-	public UserDetailsService userDetailsService() {
-
-		return new InMemoryUserDetailsManager(
-
-				User.withUsername("admin").password("{noop}admin123").roles("ADMIN").build(),
-
-				User.withUsername("manager").password("{noop}manager123").roles("MANAGER").build(),
-
-				User.withUsername("customer1").password("{noop}customer123").roles("CUSTOMER").build());
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 
+	/**
+	 * Required for authentication (used later by JWT login endpoint)
+	 */
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+		return configuration.getAuthenticationManager();
+	}
 }
