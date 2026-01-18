@@ -1,7 +1,7 @@
 # 🖥️ Laptop Store Management System
 
 A Spring Boot–based RESTful backend application for managing a laptop e-commerce platform.  
-The system supports catalog management, advanced search, cart operations, and a complete checkout & order flow.
+The system supports catalog management, advanced search, cart operations, and a complete order lifecycle.
 
 This project is developed as a **capstone-level backend system**, following clean architecture and enterprise best practices.
 
@@ -80,6 +80,15 @@ This project is developed as a **capstone-level backend system**, following clea
 
 ---
 
+### 6️⃣ Order Cancellation
+- Cancel completed orders only
+- Restore laptop stock on cancellation
+- Prevent double cancellation
+- Enforce order ownership
+- Maintain order lifecycle integrity
+
+---
+
 ## 🔐 Security & Roles
 
 The application currently uses **Spring Security with Basic Authentication** (temporary setup).
@@ -122,8 +131,8 @@ The application currently uses **Spring Security with Basic Authentication** (te
   - `INSUFFICIENT_STOCK`
   - `CART_EMPTY`
   - `CART_ITEM_NOT_FOUND`
-  - `CART_ALREADY_CHECKED_OUT`
   - `ORDER_NOT_FOUND`
+  - `ORDER_CANNOT_BE_CANCELLED`
 - Proper HTTP status mapping:
   - `400 Bad Request`
   - `401 Unauthorized`
@@ -140,13 +149,12 @@ The application currently uses **Spring Security with Basic Authentication** (te
 ✅ Public search and filtering enabled  
 ✅ Cart lifecycle fully implemented  
 ✅ Checkout and order module completed  
-✅ Inventory consistency enforced  
+✅ Order cancellation with inventory rollback implemented  
 
 ---
 
 ## 🔜 Planned Enhancements
 
-- Order cancellation
 - Payment simulation
 - JWT-based authentication
 - Unit and integration testing

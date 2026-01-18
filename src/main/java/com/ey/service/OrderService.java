@@ -82,6 +82,33 @@ public class OrderService {
 		return toResponse(saved);
 	}
 
+	public OrderResponse cancelOrder(String username, Long orderId) {
+
+		Order order = orderRepository.findById(orderId).orElseThrow(
+				() -> new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found"));
+
+		// Ensure user owns the order
+		if (!order.getUsername().equals(username)) {
+			throw new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found");
+		}
+
+		// Only COMPLETED orders can be cancelled
+		if (order.getStatus() != OrderStatus.COMPLETED) {
+			throw new ApiException(ApiErrorCode.ORDER_CANNOT_BE_CANCELLED, HttpStatus.CONFLICT,
+					"Order cannot be cancelled");
+		}
+
+		// Restore stock
+		order.getItems().forEach(item -> {
+			Laptop laptop = item.getLaptop();
+			laptop.setStock(laptop.getStock() + item.getQuantity());
+		});
+
+		order.setStatus(OrderStatus.CANCELLED);
+
+		return toResponse(order);
+	}
+
 	/*
 	 * ============================ ORDER HISTORY ============================
 	 */
