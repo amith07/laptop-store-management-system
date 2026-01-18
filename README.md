@@ -1,9 +1,9 @@
 # 🖥️ Laptop Store Management System
 
 A Spring Boot–based RESTful backend application for managing a laptop e-commerce platform.  
-The system supports catalog management, secure role-based access, advanced search, and a fully functional cart.
+The system supports catalog management, advanced search, cart operations, and a complete checkout & order flow.
 
-This project is developed as a **capstone-level backend system**, following clean architecture and enterprise design principles.
+This project is developed as a **capstone-level backend system**, following clean architecture and enterprise best practices.
 
 ---
 
@@ -26,7 +26,7 @@ This project is developed as a **capstone-level backend system**, following clea
 ### 1️⃣ Brand Management
 - Create and list brands
 - Soft delete support
-- Validation and centralized exception handling
+- Centralized validation and exception handling
 - Public read access
 
 ---
@@ -62,11 +62,21 @@ This project is developed as a **capstone-level backend system**, following clea
 - Merge quantities for the same laptop
 - Update cart item quantity
 - Remove item from cart
-- Stock validation for add and update operations
+- Stock validation during add and update
 - Price snapshot preserved at add-to-cart time
 - Automatic subtotal and cart total recalculation
-- View cart contents
-- Persistent cart storage in database
+- Persistent cart storage
+
+---
+
+### 5️⃣ Order & Checkout Module
+- Checkout active cart
+- Convert cart into immutable order
+- Snapshot pricing at checkout
+- Reduce laptop stock during checkout
+- Prevent checkout of empty or already-checked-out carts
+- View customer order history
+- Orders sorted by latest first
 
 ---
 
@@ -80,7 +90,7 @@ The application currently uses **Spring Security with Basic Authentication** (te
 |----|----|
 | ADMIN | Full access (brands, laptops) |
 | MANAGER | Stock update operations |
-| CUSTOMER | Cart operations |
+| CUSTOMER | Cart and order operations |
 | PUBLIC | Laptop listing and search |
 
 ### Test Users (In-Memory)
@@ -95,10 +105,10 @@ The application currently uses **Spring Security with Basic Authentication** (te
 
 ## 🧪 API Testing
 
-- All APIs are tested using **Postman**
+- All APIs tested using **Postman**
 - Public endpoints do not require authentication
 - Protected endpoints enforce role-based access
-- Clear and consistent HTTP responses across all scenarios
+- Clear request/response contracts with proper HTTP status codes
 
 ---
 
@@ -112,6 +122,8 @@ The application currently uses **Spring Security with Basic Authentication** (te
   - `INSUFFICIENT_STOCK`
   - `CART_EMPTY`
   - `CART_ITEM_NOT_FOUND`
+  - `CART_ALREADY_CHECKED_OUT`
+  - `ORDER_NOT_FOUND`
 - Proper HTTP status mapping:
   - `400 Bad Request`
   - `401 Unauthorized`
@@ -127,16 +139,18 @@ The application currently uses **Spring Security with Basic Authentication** (te
 ✅ Laptop lifecycle fully implemented  
 ✅ Public search and filtering enabled  
 ✅ Cart lifecycle fully implemented  
-✅ Role-based security validated  
+✅ Checkout and order module completed  
+✅ Inventory consistency enforced  
 
 ---
 
 ## 🔜 Planned Enhancements
 
-- Checkout and Order module
+- Order cancellation
+- Payment simulation
 - JWT-based authentication
 - Unit and integration testing
-- Payment simulation
+- Swagger / OpenAPI documentation
 - Deployment configuration
 
 ---
