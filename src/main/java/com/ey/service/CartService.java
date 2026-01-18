@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ey.dto.request.AddToCartRequest;
+import com.ey.dto.request.UpdateCartItemRequest;
 import com.ey.dto.response.CartItemResponse;
 import com.ey.dto.response.CartResponse;
 import com.ey.enums.ApiErrorCode;
@@ -29,6 +30,9 @@ public class CartService {
 		this.laptopRepository = laptopRepository;
 	}
 
+	/*
+	 * ============================ ADD TO CART ============================
+	 */
 	public CartResponse addToCart(String username, AddToCartRequest request) {
 
 		Laptop laptop = laptopRepository.findByIdAndDeletedAtIsNull(request.getLaptopId()).orElseThrow(
@@ -44,7 +48,7 @@ public class CartService {
 			return cartRepository.save(c);
 		});
 
-		CartItem item = cart.getItems().stream().filter(ci -> ci.getLaptop().getId().equals(laptop.getId())).findFirst()
+		CartItem item = cart.getItems().stream().filter(i -> i.getLaptop().getId().equals(laptop.getId())).findFirst()
 				.orElse(null);
 
 		if (item == null) {
@@ -56,7 +60,11 @@ public class CartService {
 			item.recalculate();
 			cart.getItems().add(item);
 		} else {
-			item.setQuantity(item.getQuantity() + request.getQuantity());
+			int newQty = item.getQuantity() + request.getQuantity();
+			if (laptop.getStock() < newQty) {
+				throw new ApiException(ApiErrorCode.INSUFFICIENT_STOCK, HttpStatus.BAD_REQUEST, "Not enough stock");
+			}
+			item.setQuantity(newQty);
 			item.recalculate();
 		}
 
@@ -64,6 +72,50 @@ public class CartService {
 		return toResponse(cart);
 	}
 
+	/*
+	 * ============================ UPDATE QUANTITY ============================
+	 */
+	public CartResponse updateItemQuantity(String username, Long laptopId, UpdateCartItemRequest request) {
+
+		Cart cart = cartRepository.findByUsernameAndCheckedOutFalse(username)
+				.orElseThrow(() -> new ApiException(ApiErrorCode.CART_EMPTY, HttpStatus.NOT_FOUND, "Cart is empty"));
+
+		CartItem item = cart.getItems().stream().filter(i -> i.getLaptop().getId().equals(laptopId)).findFirst()
+				.orElseThrow(() -> new ApiException(ApiErrorCode.CART_ITEM_NOT_FOUND, HttpStatus.NOT_FOUND,
+						"Cart item not found"));
+
+		if (item.getLaptop().getStock() < request.getQuantity()) {
+			throw new ApiException(ApiErrorCode.INSUFFICIENT_STOCK, HttpStatus.BAD_REQUEST, "Not enough stock");
+		}
+
+		item.setQuantity(request.getQuantity());
+		item.recalculate();
+		cart.recalculateTotal();
+
+		return toResponse(cart);
+	}
+
+	/*
+	 * ============================ REMOVE ITEM ============================
+	 */
+	public CartResponse removeItem(String username, Long laptopId) {
+
+		Cart cart = cartRepository.findByUsernameAndCheckedOutFalse(username)
+				.orElseThrow(() -> new ApiException(ApiErrorCode.CART_EMPTY, HttpStatus.NOT_FOUND, "Cart is empty"));
+
+		CartItem item = cart.getItems().stream().filter(i -> i.getLaptop().getId().equals(laptopId)).findFirst()
+				.orElseThrow(() -> new ApiException(ApiErrorCode.CART_ITEM_NOT_FOUND, HttpStatus.NOT_FOUND,
+						"Cart item not found"));
+
+		cart.getItems().remove(item);
+		cart.recalculateTotal();
+
+		return toResponse(cart);
+	}
+
+	/*
+	 * ============================ GET CART ============================
+	 */
 	@Transactional(readOnly = true)
 	public CartResponse getCart(String username) {
 
@@ -73,6 +125,9 @@ public class CartService {
 		return toResponse(cart);
 	}
 
+	/*
+	 * ============================ MAPPER ============================
+	 */
 	private CartResponse toResponse(Cart cart) {
 		return new CartResponse(cart.getId(), cart.getUsername(), cart.getTotalAmount(),
 				cart.getItems().stream().map(i -> new CartItemResponse(i.getLaptop().getId(),
