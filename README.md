@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-Laptop Store Management System is a **Spring Boot 3.x REST-only backend** designed as a capstone-level e-commerce application. The project demonstrates **clean layered architecture**, **JWT-based stateless security**, and **realistic business workflows** for an online laptop store.
+Laptop Store Management System is a **Spring Boot 3.x REST-only backend** built as a capstone-level e-commerce application. The project demonstrates **clean layered architecture**, **stateless JWT-based security**, **global logging with correlation IDs**, and **realistic business workflows** for an online laptop store.
 
-The system is intentionally built incrementally, with production-grade decisions at each stage.
+Development follows an incremental, production-first approach, with each module stabilized before moving forward.
 
 ---
 
@@ -18,6 +18,7 @@ The system is intentionally built incrementally, with production-grade decisions
 * MySQL
 * Maven
 * Swagger / OpenAPI
+* SLF4J + Logback
 
 ---
 
@@ -32,56 +33,81 @@ repository  → JPA persistence
 model       → JPA entities
 dto         → request / response payloads
 security    → authentication & authorization
+logging     → request tracing & observability
 exception   → centralized error handling
 config      → application configuration
 ```
 
-Rules enforced:
+Key rules:
 
 * No business logic in controllers
 * No entity exposure in APIs
 * Centralized exception handling
-* Role enforcement handled at security layer
+* Role enforcement handled at the HTTP security layer
+* Logging is cross-cutting and non-invasive
 
 ---
 
-## Security (Current – FINALIZED)
+## Security (FINALIZED)
 
 ### Authentication
 
-* **JWT-based authentication (stateless)**
+* **JWT-based stateless authentication**
 * Login endpoint:
 
 ```
 POST /auth/login
 ```
 
-* Issues signed JWT access token
-* Token passed via HTTP header:
+* Issues signed JWT access tokens
+* Tokens sent via:
 
 ```
 Authorization: Bearer <JWT>
 ```
 
-* JWT validated on every request via a custom filter
+* JWT validated on every request using a custom filter
 * SecurityContext populated from JWT claims
 
-> HTTP Basic authentication has been **fully removed**.
+HTTP Basic authentication and server-side sessions are **fully removed**.
 
 ---
 
 ### Authorization
 
-* Role-based access enforced **at the SecurityConfig (HTTP layer)**
-* Method-level role checks removed to avoid JWT + Spring Security 6 inconsistencies
+* Role-based access enforced **centrally in SecurityConfig (HTTP layer)**
+* Method-level role annotations intentionally avoided for JWT stability
 
-Supported roles:
+Supported authorities:
 
 * `ROLE_ADMIN`
 * `ROLE_MANAGER`
 * `ROLE_CUSTOMER`
 
-Roles are embedded directly in JWT claims and mapped to `GrantedAuthority` objects.
+Roles are embedded directly in JWT claims and mapped to Spring Security authorities.
+
+---
+
+## Global Logging & Observability
+
+### Features
+
+* Request/response logging for every API call
+* Unique `requestId` generated per request
+* Authenticated `username` captured from SecurityContext
+* MDC (Mapped Diagnostic Context) used for log correlation
+* Entry, exit, and business-decision logs
+
+### Example Log Output
+
+```
+INFO  [c9b1a2e4] [customer] Incoming request: POST /api/orders
+INFO  [c9b1a2e4] [customer] Starting checkout for user=customer
+INFO  [c9b1a2e4] [customer] Order 15 successfully created for user=customer
+INFO  [c9b1a2e4] [customer] Outgoing response: POST /api/orders (status=201)
+```
+
+This enables production-grade debugging and traceability.
 
 ---
 
@@ -145,7 +171,7 @@ POST /api/laptops         (ADMIN / MANAGER)
 
 * One active cart per customer
 * Add, update, remove items
-* Cart ownership derived from SecurityContext
+* Cart ownership derived from JWT SecurityContext
 
 ### Endpoints
 
@@ -187,7 +213,7 @@ POST /api/orders/{id}/cancel    (ROLE_CUSTOMER)
 ### Admin / Manager Views
 
 ```
-GET /api/admin/orders                 (ROLE_ADMIN)
+GET /api/admin/orders                     (ROLE_ADMIN)
 GET /api/manager/orders/status/{status}  (ROLE_MANAGER / ROLE_ADMIN)
 ```
 
@@ -197,17 +223,7 @@ GET /api/manager/orders/status/{status}  (ROLE_MANAGER / ROLE_ADMIN)
 
 * Payment initiation endpoint exists
 * POST-only enforcement
-* Payment confirmation and refunds pending
-
----
-
-## JWT Flow Summary
-
-1. Client logs in via `/auth/login`
-2. Receives JWT access token
-3. Sends token on every secured request
-4. JWT filter validates token and sets SecurityContext
-5. Role enforcement handled at SecurityConfig level
+* Payment confirmation and refund logic pending
 
 ---
 
@@ -225,9 +241,9 @@ GET /api/manager/orders/status/{status}  (ROLE_MANAGER / ROLE_ADMIN)
 * Clean layered architecture
 * Database-backed authentication
 * JWT login endpoint
-* JWT validation filter
-* Stateless security configuration
-* Role-based access at HTTP layer
+* Stateless JWT security
+* Centralized role enforcement
+* Global logging with MDC
 * Brand, Laptop, Cart modules
 * Order checkout, cancellation, history
 * Inventory reconciliation
@@ -237,8 +253,7 @@ GET /api/manager/orders/status/{status}  (ROLE_MANAGER / ROLE_ADMIN)
 
 ## What Is Pending
 
-* Global logging (SLF4J + MDC)
-* Unit & integration testing
+* Unit & integration testing (JUnit, Mockito)
 * Extended order lifecycle (PROCESSING, SHIPPED, DELIVERED, REFUNDED)
 * Payment confirmation & refund flow
 * Pagination, sorting, filtering
@@ -250,7 +265,7 @@ GET /api/manager/orders/status/{status}  (ROLE_MANAGER / ROLE_ADMIN)
 
 1. Configure MySQL database
 2. Update `application.yml`
-3. Run application
+3. Run the application
 
 Base URL:
 
@@ -264,7 +279,8 @@ http://localhost:8080
 
 **Status:** Active development
 **Security:** JWT-based, stateless, production-ready
-**Next Milestone:** Global logging & observability
+**Observability:** Global logging with request tracing enabled
+**Next Milestone:** Unit & integration testing
 
 ---
 

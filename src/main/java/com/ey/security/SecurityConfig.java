@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.ey.logging.RequestLoggingFilter;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -31,13 +33,18 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
 				// ============================
-				// Disable ALL stateful auth
+				// Disable stateful auth
 				// ============================
 				.httpBasic(httpBasic -> httpBasic.disable()).formLogin(form -> form.disable())
 				.oauth2Login(oauth -> oauth.disable()).oauth2Client(oauth -> oauth.disable())
 
 				// ============================
-				// JWT Filter
+				// Logging filter (FIRST)
+				// ============================
+				.addFilterBefore(new RequestLoggingFilter(), UsernamePasswordAuthenticationFilter.class)
+
+				// ============================
+				// JWT filter
 				// ============================
 				.addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
 
@@ -58,12 +65,14 @@ public class SecurityConfig {
 						// ADMIN
 						.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-						// Public
+						// Public APIs
 						.requestMatchers(HttpMethod.GET, "/api/brands/**", "/api/laptops/**").permitAll()
 
 						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
-						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+						// Docs & health
+						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+						.permitAll()
 
 						.anyRequest().authenticated());
 
@@ -81,7 +90,7 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * Required ONLY for /auth/login
+	 * Used ONLY by /auth/login
 	 */
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
