@@ -12,13 +12,17 @@ public class PaymentResponse {
 	private PaymentStatus status;
 	private BigDecimal amount;
 	private Instant paidAt;
+	private Instant refundedAt;
 
-	public PaymentResponse(Long paymentId, Long orderId, PaymentStatus status, BigDecimal amount, Instant paidAt) {
+	public PaymentResponse(Long paymentId, Long orderId, PaymentStatus status, BigDecimal amount, Instant paidAt,
+			Instant refundedAt) {
+
 		this.paymentId = paymentId;
 		this.orderId = orderId;
 		this.status = status;
 		this.amount = amount;
 		this.paidAt = paidAt;
+		this.refundedAt = refundedAt;
 	}
 
 	public Long getPaymentId() {
@@ -39,5 +43,9 @@ public class PaymentResponse {
 
 	public Instant getPaidAt() {
 		return paidAt;
+	}
+
+	public Instant getRefundedAt() {
+		return refundedAt;
 	}
 }

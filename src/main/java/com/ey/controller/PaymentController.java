@@ -30,4 +30,10 @@ public class PaymentController {
 	public ResponseEntity<PaymentResponse> pay(@PathVariable Long orderId) {
 		return ResponseEntity.ok(paymentService.pay(currentUser(), orderId));
 	}
+
+	@PreAuthorize("hasRole('CUSTOMER')")
+	@PostMapping("/{paymentId}/refund")
+	public ResponseEntity<PaymentResponse> refund(@PathVariable Long paymentId) {
+		return ResponseEntity.ok(paymentService.refund(currentUser(), paymentId));
+	}
 }

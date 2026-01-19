@@ -1,106 +1,114 @@
 # Laptop Store Management System
 
-A Spring Boot–based backend application for managing an online laptop store.  
-The system supports secure authentication, role-based authorization, cart management, order lifecycle handling, and payment processing.
+## Overview
+Laptop Store Management System is a Spring Boot–based backend application that provides a complete e-commerce workflow for purchasing laptops. It supports role-based access, cart management, order processing, payments, and refunds using JWT-based authentication and MySQL as the primary database.
 
 ---
 
-## 🚀 Tech Stack
-
+## Tech Stack
 - Java 17
-- Spring Boot 3
-- Spring Security (JWT Authentication)
+- Spring Boot 3.x
+- Spring Security (JWT)
 - Spring Data JPA (Hibernate)
 - MySQL 8
 - Maven
-- JUnit 5 & Mockito
-- Swagger / OpenAPI
+- JUnit & Mockito
+- Postman (API testing)
 
 ---
 
-## 🔐 Authentication & Authorization
+## Core Features Implemented
 
-- Authentication is JWT-based
-- Authorization is role-based
-- JWT contains:
-  - sub → username
-  - roles → list of granted roles
-
-### Supported Roles
-- CUSTOMER
-- ADMIN
-- MANAGER
+### Authentication & Authorization
+- JWT-based authentication
+- Role-based access control:
+  - CUSTOMER
+  - ADMIN
+  - MANAGER
 
 ---
 
-## 🛒 Cart Module
+### Cart Management
+- Add items to cart
+- View cart (customer-only)
+- Prevent checkout with empty cart
 
-Endpoints:
-- GET /api/cart
+---
+
+### Order Management
+- Checkout cart → creates order with status CREATED
+- Order lifecycle:
+  - CREATED
+  - COMPLETED
+  - CANCELLED
+- Cancel order (only before payment)
+- Restore stock on order cancellation
+- View:
+  - Customer order history
+  - Admin all orders
+  - Manager orders by status
+
+---
+
+### Payment Management (Latest)
+- Pay for an order (customer-only)
+- One payment per order enforced
+- Payment lifecycle:
+  - PENDING
+  - SUCCESS
+  - REFUNDED
+- Payment automatically completes order
+- Refund payment:
+  - Valid only for SUCCESS payments
+  - Updates payment status to REFUNDED
+  - Cancels the order
+  - Restores laptop stock
+
+---
+
+
+## API Endpoints Summary
+
+### Cart
 - POST /api/cart/items
-- PATCH /api/cart/items/{laptopId}
-- DELETE /api/cart/items/{laptopId}
+- GET /api/cart
 
-Rules:
-- One active cart per user
-- Stock not reduced at add-to-cart
-- Cart locked after checkout
-
----
-
-## 📦 Order Module
-
-Lifecycle:
-CREATED → COMPLETED  
-CREATED → CANCELLED
-
-Endpoints:
+### Orders
 - POST /api/orders
-- GET /api/orders
 - POST /api/orders/{orderId}/cancel
+- GET /api/orders
 - GET /api/admin/orders
 - GET /api/manager/orders/status/{status}
 
-Rules:
-- Checkout creates CREATED order
-- Stock reduced on checkout
-- Cancellation allowed only before payment
-
----
-
-## 💳 Payment Module
-
-Endpoint:
+### Payments
 - POST /api/payments/orders/{orderId}
-
-Rules:
-- Only CREATED orders can be paid
-- One payment per order
-- Payment marks order COMPLETED
+- POST /api/payments/{paymentId}/refund
 
 ---
 
-## 🧪 Testing
-
-- Controller tests
-- Service unit tests
-- Repository tests
-- Separate test schema
-
-Run:
-mvn test
+## Testing
+- All unit and integration tests passing
+- Controller, service, and repository layers covered
+- MySQL test schema isolated via test profile
 
 ---
 
-## 📖 Swagger
-
-http://localhost:8080/swagger-ui.html
+## Current Status
+Stable build
+Payments & refunds working correctly
+Database schema aligned with enums
+Ready for enhancements
 
 ---
 
-## 📌 Status
+## Next Possible Enhancements
+- Payment history API
+- Admin override refunds
+- Refund time window restrictions
+- Idempotency protection for payments
+- Integration tests for payment & refund flows
 
-All modules complete  
-All tests passing  
-JWT security enforced  
-Ready for submission
+---
+
+## Author
+Amith R - Capstone Project – Laptop Store Management System

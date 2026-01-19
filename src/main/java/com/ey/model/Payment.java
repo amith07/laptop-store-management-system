@@ -30,27 +30,26 @@ public class Payment {
 	private Order order;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false, length = 20)
 	private PaymentStatus status;
 
 	@Column(nullable = false, precision = 19, scale = 2)
 	private BigDecimal amount;
 
 	private Instant paidAt;
+	private Instant refundedAt;
 
 	@PrePersist
 	protected void onCreate() {
-		this.status = PaymentStatus.PENDING;
+		if (this.status == null) {
+			this.status = PaymentStatus.PENDING;
+		}
 	}
 
-	// getters & setters
+	/* Getters & Setters */
 
 	public Long getId() {
 		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
 	}
 
 	public Order getOrder() {
@@ -85,4 +84,11 @@ public class Payment {
 		this.paidAt = paidAt;
 	}
 
+	public Instant getRefundedAt() {
+		return refundedAt;
+	}
+
+	public void setRefundedAt(Instant refundedAt) {
+		this.refundedAt = refundedAt;
+	}
 }
