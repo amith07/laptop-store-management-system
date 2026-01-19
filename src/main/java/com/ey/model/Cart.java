@@ -96,4 +96,20 @@ public class Cart {
 	public void setUpdatedAt(Instant updatedAt) {
 		this.updatedAt = updatedAt;
 	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setItems(List<CartItem> items) {
+		this.items = items;
+	}
+
+	public void setTotalAmount(BigDecimal totalAmount) {
+		this.totalAmount = totalAmount;
+	}
+
+	public void setCreatedAt(Instant createdAt) {
+		this.createdAt = createdAt;
+	}
 }

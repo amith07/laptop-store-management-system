@@ -88,4 +88,12 @@ public class Order {
 	public void setCreatedAt(Instant createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setItems(List<OrderItem> items) {
+		this.items = items;
+	}
 }
