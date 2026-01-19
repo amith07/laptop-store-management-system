@@ -3,7 +3,6 @@ package com.ey.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +14,6 @@ import com.ey.service.OrderService;
 
 @RestController
 @RequestMapping("/api/manager/orders")
-@PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
 public class ManagerOrderController {
 
 	private final OrderService orderService;
@@ -26,7 +24,6 @@ public class ManagerOrderController {
 
 	@GetMapping("/status/{status}")
 	public ResponseEntity<List<OrderResponse>> getOrdersByStatus(@PathVariable OrderStatus status) {
-
 		return ResponseEntity.ok(orderService.getOrdersByStatus(status));
 	}
 }

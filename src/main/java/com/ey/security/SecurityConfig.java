@@ -4,11 +4,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -23,25 +23,47 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider)
 			throws Exception {
 
-		http.csrf(csrf -> csrf.disable())
+		http
+				// ============================
+				// Stateless REST API
+				// ============================
+				.csrf(csrf -> csrf.disable())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-				.formLogin(form -> form.disable()).oauth2Login(oauth -> oauth.disable())
-				.oauth2Client(oauth -> oauth.disable())
+				// ============================
+				// Disable ALL stateful auth
+				// ============================
+				.httpBasic(httpBasic -> httpBasic.disable()).formLogin(form -> form.disable())
+				.oauth2Login(oauth -> oauth.disable()).oauth2Client(oauth -> oauth.disable())
 
-				// TEMP: HTTP Basic still enabled
-				.httpBasic(Customizer.withDefaults())
-
+				// ============================
 				// JWT Filter
+				// ============================
 				.addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
 
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/login").permitAll()
+				// ============================
+				// Authorization rules
+				// ============================
+				.authorizeHttpRequests(auth -> auth
 
+						// Auth
+						.requestMatchers("/auth/login").permitAll()
+
+						// CUSTOMER
+						.requestMatchers("/api/cart/**", "/api/orders/**").hasAuthority("ROLE_CUSTOMER")
+
+						// MANAGER
+						.requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+
+						// ADMIN
+						.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+
+						// Public
 						.requestMatchers(HttpMethod.GET, "/api/brands/**", "/api/laptops/**").permitAll()
 
 						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
-						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-						.permitAll()
+						.requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
 						.anyRequest().authenticated());
 
@@ -58,6 +80,9 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
+	/**
+	 * Required ONLY for /auth/login
+	 */
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 		return configuration.getAuthenticationManager();
