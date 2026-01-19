@@ -67,9 +67,8 @@ public class OrderService {
 			Laptop laptop = cartItem.getLaptop();
 
 			if (laptop.getStock() < cartItem.getQuantity()) {
-				log.warn("Insufficient stock during checkout: laptopId={}, requested={}, available={}", laptop.getId(),
+				log.warn("Insufficient stock: laptopId={}, requested={}, available={}", laptop.getId(),
 						cartItem.getQuantity(), laptop.getStock());
-
 				throw new ApiException(ApiErrorCode.INSUFFICIENT_STOCK, HttpStatus.BAD_REQUEST,
 						"Not enough stock during checkout");
 			}
@@ -90,12 +89,9 @@ public class OrderService {
 
 		cart.setCheckedOut(true);
 
-		// NOTE: Payment module is not finalized yet
-		order.setStatus(OrderStatus.COMPLETED);
-
 		Order savedOrder = orderRepository.save(order);
 
-		log.info("Order {} successfully created for user={}", savedOrder.getId(), username);
+		log.info("Order {} created successfully for user={}", savedOrder.getId(), username);
 
 		return toResponse(savedOrder);
 	}
@@ -106,19 +102,16 @@ public class OrderService {
 
 		log.info("Cancel request received for orderId={} by user={}", orderId, username);
 
-		Order order = orderRepository.findById(orderId).orElseThrow(() -> {
-			log.warn("Order not found: orderId={}", orderId);
-			return new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found");
-		});
+		Order order = orderRepository.findById(orderId).orElseThrow(
+				() -> new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found"));
 
 		if (!order.getUsername().equals(username)) {
 			log.warn("Unauthorized cancel attempt: user={} orderId={}", username, orderId);
 			throw new ApiException(ApiErrorCode.ORDER_NOT_FOUND, HttpStatus.NOT_FOUND, "Order not found");
 		}
 
-		if (order.getStatus() != OrderStatus.COMPLETED) {
+		if (order.getStatus() != OrderStatus.CREATED) {
 			log.warn("Order cannot be cancelled: orderId={} status={}", orderId, order.getStatus());
-
 			throw new ApiException(ApiErrorCode.ORDER_CANNOT_BE_CANCELLED, HttpStatus.CONFLICT,
 					"Order cannot be cancelled");
 		}

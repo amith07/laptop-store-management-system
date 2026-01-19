@@ -2,6 +2,7 @@ package com.ey.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,9 +21,8 @@ public class PaymentController {
 		this.paymentService = paymentService;
 	}
 
-	// TEMP mocked user
 	private String currentUser() {
-		return "customer1";
+		return SecurityContextHolder.getContext().getAuthentication().getName();
 	}
 
 	@PreAuthorize("hasRole('CUSTOMER')")

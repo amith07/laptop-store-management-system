@@ -26,7 +26,7 @@ public class Payment {
 	private Long id;
 
 	@OneToOne(optional = false)
-	@JoinColumn(name = "order_id", unique = true)
+	@JoinColumn(name = "order_id", nullable = false, unique = true)
 	private Order order;
 
 	@Enumerated(EnumType.STRING)
@@ -40,13 +40,17 @@ public class Payment {
 
 	@PrePersist
 	protected void onCreate() {
-		this.paidAt = Instant.now();
+		this.status = PaymentStatus.PENDING;
 	}
 
-	/* Getters & Setters */
+	// getters & setters
 
 	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Order getOrder() {
@@ -76,4 +80,9 @@ public class Payment {
 	public Instant getPaidAt() {
 		return paidAt;
 	}
+
+	public void setPaidAt(Instant paidAt) {
+		this.paidAt = paidAt;
+	}
+
 }
