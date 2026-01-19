@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -19,62 +20,44 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider)
+			throws Exception {
 
-		http
-				// ============================
-				// CSRF (Disabled for REST)
-				// ============================
-				.csrf(csrf -> csrf.disable())
+		http.csrf(csrf -> csrf.disable())
 
-				// ============================
-				// Disable UI-based auth (REST only)
-				// ============================
 				.formLogin(form -> form.disable()).oauth2Login(oauth -> oauth.disable())
-				.oauth2Client(oauth -> oauth.disable()).httpBasic(Customizer.withDefaults())
+				.oauth2Client(oauth -> oauth.disable())
 
-				// ============================
-				// Authorization rules
-				// ============================
-				.authorizeHttpRequests(auth -> auth
+				// TEMP: HTTP Basic still enabled
+				.httpBasic(Customizer.withDefaults())
 
-						// ============================
-						// PUBLIC READ APIs
-						// ============================
+				// JWT Filter
+				.addFilterBefore(jwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+
+				.authorizeHttpRequests(auth -> auth.requestMatchers("/auth/login").permitAll()
+
 						.requestMatchers(HttpMethod.GET, "/api/brands/**", "/api/laptops/**").permitAll()
 
 						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
-						// ============================
-						// PUBLIC SYSTEM ENDPOINTS
-						// ============================
 						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 						.permitAll()
 
-						// ============================
-						// WRITE APIs REQUIRE AUTH
-						// ============================
-						.requestMatchers("/api/brands/**", "/api/laptops/**").authenticated()
-
-						// ============================
-						// EVERYTHING ELSE
-						// ============================
 						.anyRequest().authenticated());
 
 		return http.build();
 	}
 
-	/**
-	 * BCrypt password encoder Used by CustomUserDetailsService
-	 */
+	@Bean
+	public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+		return new JwtAuthenticationFilter(jwtTokenProvider);
+	}
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
 
-	/**
-	 * Required for authentication (used later by JWT login endpoint)
-	 */
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 		return configuration.getAuthenticationManager();

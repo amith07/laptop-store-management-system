@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-Laptop Store Management System is a **Spring Boot 3.x REST-only backend** designed as a capstone-level e-commerce system. The application follows **clean layered architecture**, enforces **role-based security**, and models realistic business flows for browsing laptops, managing carts, placing orders, and handling inventory.
+Laptop Store Management System is a **Spring Boot 3.x REST-only backend** developed as a capstone-level e-commerce system. The application demonstrates **clean architecture**, **modern security practices**, and **realistic business workflows** for an online laptop store.
 
-The project is being developed **incrementally**, with each phase stabilised before moving to the next.
+The project is implemented **incrementally**, with each major feature stabilized before advancing to the next.
 
 ---
 
@@ -12,32 +12,33 @@ The project is being developed **incrementally**, with each phase stabilised bef
 
 * Java 17
 * Spring Boot 3.x
-* Spring Security (HTTP Basic – temporary)
-* Spring Data JPA
+* Spring Security 6.x
+* JWT (JSON Web Tokens)
+* Spring Data JPA (Hibernate)
 * MySQL
-* Hibernate
 * Swagger / OpenAPI
+* Maven
 
 ---
 
 ## Architecture
 
-Strict layered separation is enforced:
+The application strictly follows a layered architecture:
 
 ```
 controller  → REST endpoints only
-service     → business logic & validation
-repository  → persistence layer (JPA)
+service     → business logic & validations
+repository  → JPA persistence layer
 model       → JPA entities
 dto         → request / response payloads
 security    → authentication & authorization
 exception   → centralized error handling
-config      → bootstrap & configuration
+config      → configuration & bootstrap
 ```
 
-❌ No business logic in controllers
-❌ No entity exposure in APIs
-✅ Centralized exception handling
+✔ No business logic in controllers
+✔ No entity exposure in APIs
+✔ Centralized exception handling
 
 ---
 
@@ -45,40 +46,53 @@ config      → bootstrap & configuration
 
 ### Authentication
 
-* **HTTP Basic Authentication** (temporary)
-* Users are **database-backed** (no in-memory users)
-* Passwords stored using **BCrypt hashing**
+* **JWT-based authentication** implemented
+* `POST /auth/login` issues JWT access tokens
+* Tokens are passed via:
 
-### Roles
+```
+Authorization: Bearer <token>
+```
+
+* JWT validated on every request via a custom filter
+* SecurityContext populated from token claims
+
+> ⚠️ HTTP Basic authentication is still temporarily enabled for backward compatibility. It will be removed in the next step when the system is made fully stateless.
+
+---
+
+### Authorization
+
+Role-based access enforced using `@PreAuthorize`.
+
+Supported roles:
 
 * `ADMIN`
 * `MANAGER`
 * `CUSTOMER`
 
-Role checks enforced using `@PreAuthorize`.
-
-> ⚠️ JWT / OAuth2 authentication is planned next and not yet implemented.
+Role information is embedded in JWT claims and applied consistently across controllers.
 
 ---
 
 ## User & Role Model
 
-* `User`
+* **User**
 
   * username (unique)
   * email (unique)
-  * password (BCrypt)
+  * password (BCrypt encoded)
   * status: `ACTIVE | LOCKED | DISABLED`
 
-* `Role`
+* **Role**
 
   * ADMIN
   * MANAGER
   * CUSTOMER
 
-Users and roles are linked via a **many-to-many relationship**.
+* Users and roles are mapped using a **many-to-many relationship**
 
-Initial users are seeded at startup:
+### Seeded Users (Dev/Test)
 
 | Username | Password    | Role     |
 | -------- | ----------- | -------- |
@@ -128,8 +142,8 @@ POST /api/laptops        (ADMIN / MANAGER)
 ### Features
 
 * One active cart per customer
-* Add, update, remove items
-* Cart tied to **authenticated user**
+* Add, update, remove cart items
+* Cart ownership derived from authenticated user (SecurityContext)
 * No hardcoded usernames
 
 ### Endpoints
@@ -141,7 +155,7 @@ DELETE /api/cart/items/{laptopId}
 GET    /api/cart
 ```
 
-**Role:** CUSTOMER only
+**Access:** CUSTOMER
 
 ---
 
@@ -155,11 +169,11 @@ CREATED → COMPLETED → CANCELLED
 
 ### Business Rules
 
-* Orders are created from the customer cart
+* Orders created from the authenticated user’s cart
 * Cart must not be empty
-* Stock is validated and reduced on checkout
-* Stock is restored on cancellation
-* Customers can only access their own orders
+* Stock validated and reduced during checkout
+* Stock restored on cancellation
+* Customers can access only their own orders
 
 ### Endpoints
 
@@ -169,7 +183,7 @@ GET  /api/orders              (CUSTOMER)  → order history
 POST /api/orders/{id}/cancel  (CUSTOMER)
 ```
 
-### Admin / Manager
+### Admin / Manager Views
 
 ```
 GET /api/admin/orders                 (ADMIN)
@@ -182,11 +196,23 @@ GET /api/manager/orders?status=...    (MANAGER / ADMIN)
 
 ### Current State
 
-* Payment initiation exists
-* Payment confirmation & refunds not yet implemented
-* Only POST methods allowed (no GET for payments)
+* Payment initiation endpoint exists
+* Only POST methods allowed
+* Payment lifecycle and refunds not yet implemented
 
-> Payment lifecycle will be completed after JWT integration.
+---
+
+## JWT Flow Summary
+
+1. Client logs in:
+
+```
+POST /auth/login
+```
+
+2. Receives JWT access token
+3. Sends token with each secured request
+4. JWT filter validates token and sets SecurityContext
 
 ---
 
@@ -194,41 +220,43 @@ GET /api/manager/orders?status=...    (MANAGER / ADMIN)
 
 * Centralized `GlobalExceptionHandler`
 * Custom `ApiException`
-* Structured error responses using `ApiErrorCode`
-* Correct HTTP status mapping
+* Consistent error responses via `ApiErrorCode`
+* Proper HTTP status mapping
 
 ---
 
 ## What Is Completed
 
-✅ Clean architecture established
-✅ DB-backed authentication
-✅ Role-based authorization
-✅ Brand, Laptop, Cart modules
-✅ Order checkout, cancellation & history
-✅ Inventory reconciliation on orders
-✅ Swagger enabled
+* Clean layered architecture
+* Database-backed authentication
+* JWT issuance (`/auth/login`)
+* JWT validation filter
+* Role-based authorization
+* Brand, Laptop, Cart modules
+* Order checkout, cancellation, and history
+* Inventory reconciliation
+* Swagger integration
 
 ---
 
 ## What Is Pending (Next Phases)
 
-1. JWT Authentication & OAuth2 Resource Server
-2. Refresh tokens & stateless security
-3. Mapper layer (MapStruct or manual mappers)
+1. Remove HTTP Basic & enable stateless session management
+2. Refresh token support
+3. Mapper layer completion
 4. Global logging with MDC
 5. Unit & integration tests
-6. Order lifecycle expansion (PROCESSING, SHIPPED, DELIVERED, REFUNDED)
-7. Payment completion & refunds
-8. Pagination & sorting
+6. Extended order lifecycle (PROCESSING, SHIPPED, DELIVERED, REFUNDED)
+7. Payment confirmation & refund flow
+8. Pagination, sorting, and filtering
 
 ---
 
-## How to Run
+## Running the Application
 
 1. Configure MySQL database
 2. Update `application.yml`
-3. Run application
+3. Run the application
 
 ```
 http://localhost:8080
@@ -239,11 +267,10 @@ http://localhost:8080
 
 ## Project Status
 
-**Status:** 🚧 In Progress (Security hardening phase complete)
-**Next Milestone:** JWT Authentication
+**Status:** Active development
+**Current Milestone:** JWT-based authentication enforced via filter
+**Next Milestone:** Fully stateless security configuration
 
 ---
 
-## Author
-
-Amith R - Capstone Project – Laptop Store Management System
+Capstone Project – Laptop Store Management System

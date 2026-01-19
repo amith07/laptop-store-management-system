@@ -13,3 +13,8 @@ spring:
   jackson:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
+
+security:
+  jwt:
+    secret: my-super-secret-key-for-jwt-signing-please-change
+    expiration-ms: 900000
