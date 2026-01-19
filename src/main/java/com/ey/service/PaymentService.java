@@ -15,6 +15,7 @@ import com.ey.exception.ApiException;
 import com.ey.model.Laptop;
 import com.ey.model.Order;
 import com.ey.model.Payment;
+import com.ey.repository.LaptopRepository;
 import com.ey.repository.OrderRepository;
 import com.ey.repository.PaymentRepository;
 
@@ -28,10 +29,14 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final OrderRepository orderRepository;
+	private final LaptopRepository laptopRepository;
 
-	public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository) {
+	public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository,
+			LaptopRepository laptopRepository) {
+
 		this.paymentRepository = paymentRepository;
 		this.orderRepository = orderRepository;
+		this.laptopRepository = laptopRepository;
 	}
 
 	/* ============================ PAY ============================ */
@@ -63,13 +68,15 @@ public class PaymentService {
 		payment.setStatus(PaymentStatus.SUCCESS);
 		payment.setPaidAt(Instant.now());
 
+		Payment savedPayment = paymentRepository.save(payment);
+
+		// Persist order state
 		order.setStatus(OrderStatus.COMPLETED);
+		orderRepository.save(order);
 
-		Payment saved = paymentRepository.save(payment);
+		log.info("Payment {} successful for orderId={}", savedPayment.getId(), orderId);
 
-		log.info("Payment {} successful for orderId={}", saved.getId(), orderId);
-
-		return toResponse(saved);
+		return toResponse(savedPayment);
 	}
 
 	/* ============================ REFUND ============================ */
@@ -92,21 +99,28 @@ public class PaymentService {
 					"Payment cannot be refunded");
 		}
 
-		// Restore stock
+		// Restore stock (persist laptops)
 		order.getItems().forEach(item -> {
 			Laptop laptop = item.getLaptop();
 			laptop.setStock(laptop.getStock() + item.getQuantity());
+			laptopRepository.save(laptop);
 		});
 
+		// Update payment
 		payment.setStatus(PaymentStatus.REFUNDED);
 		payment.setRefundedAt(Instant.now());
+		paymentRepository.save(payment);
 
+		// Update order
 		order.setStatus(OrderStatus.CANCELLED);
+		orderRepository.save(order);
 
 		log.info("Payment {} refunded successfully", paymentId);
 
 		return toResponse(payment);
 	}
+
+	/* ============================ MAPPER ============================ */
 
 	private PaymentResponse toResponse(Payment payment) {
 		return new PaymentResponse(payment.getId(), payment.getOrder().getId(), payment.getStatus(),

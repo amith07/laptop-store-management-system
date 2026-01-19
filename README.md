@@ -1,114 +1,121 @@
 # Laptop Store Management System
 
-## Overview
-Laptop Store Management System is a Spring Boot–based backend application that provides a complete e-commerce workflow for purchasing laptops. It supports role-based access, cart management, order processing, payments, and refunds using JWT-based authentication and MySQL as the primary database.
+A Spring Boot–based backend application for managing an online laptop store.  
+The system supports cart management, order lifecycle handling, secure payments, refunds, and role-based access using JWT authentication.
 
 ---
 
 ## Tech Stack
+
 - Java 17
-- Spring Boot 3.x
+- Spring Boot
 - Spring Security (JWT)
 - Spring Data JPA (Hibernate)
-- MySQL 8
+- MySQL
 - Maven
-- JUnit & Mockito
-- Postman (API testing)
 
 ---
 
-## Core Features Implemented
+## Core Features
 
 ### Authentication & Authorization
 - JWT-based authentication
-- Role-based access control:
+- Role-based access control
   - CUSTOMER
-  - ADMIN
   - MANAGER
+  - ADMIN
+- Secure endpoints using method-level security
 
 ---
 
-### Cart Management
+## Cart Management
 - Add items to cart
-- View cart (customer-only)
-- Prevent checkout with empty cart
+- Update quantities
+- Calculate total amount
+- One active cart per user
+- Cart is locked after checkout
 
 ---
 
-### Order Management
-- Checkout cart → creates order with status CREATED
-- Order lifecycle:
-  - CREATED
-  - COMPLETED
-  - CANCELLED
-- Cancel order (only before payment)
-- Restore stock on order cancellation
-- View:
-  - Customer order history
-  - Admin all orders
-  - Manager orders by status
+## Order Lifecycle
+
+Order statuses:
+- CREATED
+- COMPLETED
+- CANCELLED
+
+Flow:
+1. Customer adds items to cart
+2. Checkout creates an order with status `CREATED`
+3. Payment completes the order
+4. Order can be cancelled only via refund flow
 
 ---
 
-### Payment Management (Latest)
-- Pay for an order (customer-only)
-- One payment per order enforced
-- Payment lifecycle:
-  - PENDING
-  - SUCCESS
-  - REFUNDED
-- Payment automatically completes order
-- Refund payment:
-  - Valid only for SUCCESS payments
-  - Updates payment status to REFUNDED
-  - Cancels the order
-  - Restores laptop stock
+## Payment Lifecycle
+
+Payment statuses:
+- PENDING
+- SUCCESS
+- REFUNDED
+
+Flow:
+1. Payment allowed only for `CREATED` orders
+2. Successful payment:
+   - Creates a payment record
+   - Updates order status to `COMPLETED`
+   - Deducts stock
+3. Refund:
+   - Allowed only for `SUCCESS` payments
+   - Updates payment to `REFUNDED`
+   - Cancels the order
+   - Restores stock
 
 ---
 
-
-## API Endpoints Summary
+## API Endpoints (Key)
 
 ### Cart
-- POST /api/cart/items
-- GET /api/cart
+- `POST /api/cart/items` – Add item to cart
 
 ### Orders
-- POST /api/orders
-- POST /api/orders/{orderId}/cancel
-- GET /api/orders
-- GET /api/admin/orders
-- GET /api/manager/orders/status/{status}
+- `POST /api/orders` – Checkout cart
+- `GET /api/orders` – View order history (customer)
+- `GET /api/admin/orders` – View all orders (admin)
+- `GET /api/manager/orders?status=` – Filter by status (manager)
 
 ### Payments
-- POST /api/payments/orders/{orderId}
-- POST /api/payments/{paymentId}/refund
+- `POST /api/payments/orders/{orderId}` – Pay for an order
+- `POST /api/payments/{paymentId}/refund` – Refund a payment
 
 ---
 
-## Testing
-- All unit and integration tests passing
-- Controller, service, and repository layers covered
-- MySQL test schema isolated via test profile
+## Security Notes
+- All protected endpoints require a valid JWT
+- Users can only access their own orders and payments
+- Unauthorized access returns 404 to prevent data leakage
 
 ---
 
-## Current Status
-Stable build
-Payments & refunds working correctly
-Database schema aligned with enums
-Ready for enhancements
+## Database Notes
+- MySQL is used for both development and testing
+- Separate schema recommended for tests
+- Enum values are stored as STRING to avoid ordinal issues
 
 ---
 
-## Next Possible Enhancements
-- Payment history API
-- Admin override refunds
-- Refund time window restrictions
-- Idempotency protection for payments
-- Integration tests for payment & refund flows
+## Current Project State
+
+- Cart, Order, Payment, and Refund flows fully implemented
+- Business rules enforced at service layer
+- Logging added for all major flows
+- Integration-tested manually using Postman
 
 ---
 
-## Author
-Amith R - Capstone Project – Laptop Store Management System
+## Future Enhancements
+- Payment history endpoint
+- Admin-managed refunds
+- Shipment lifecycle
+- Idempotent payment handling
+- Automated integration tests

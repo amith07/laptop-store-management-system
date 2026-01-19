@@ -30,7 +30,7 @@ public class Payment {
 	private Order order;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, length = 20)
+	@Column(nullable = false, length = 30)
 	private PaymentStatus status;
 
 	@Column(nullable = false, precision = 19, scale = 2)
