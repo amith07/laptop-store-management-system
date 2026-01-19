@@ -1,6 +1,8 @@
 package com.ey.service;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +17,6 @@ import com.ey.exception.ApiException;
 import com.ey.model.Laptop;
 import com.ey.model.Order;
 import com.ey.model.Payment;
-import com.ey.repository.LaptopRepository;
 import com.ey.repository.OrderRepository;
 import com.ey.repository.PaymentRepository;
 
@@ -29,14 +30,10 @@ public class PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final OrderRepository orderRepository;
-	private final LaptopRepository laptopRepository;
 
-	public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository,
-			LaptopRepository laptopRepository) {
-
+	public PaymentService(PaymentRepository paymentRepository, OrderRepository orderRepository) {
 		this.paymentRepository = paymentRepository;
 		this.orderRepository = orderRepository;
-		this.laptopRepository = laptopRepository;
 	}
 
 	/* ============================ PAY ============================ */
@@ -68,15 +65,13 @@ public class PaymentService {
 		payment.setStatus(PaymentStatus.SUCCESS);
 		payment.setPaidAt(Instant.now());
 
-		Payment savedPayment = paymentRepository.save(payment);
-
-		// Persist order state
 		order.setStatus(OrderStatus.COMPLETED);
-		orderRepository.save(order);
 
-		log.info("Payment {} successful for orderId={}", savedPayment.getId(), orderId);
+		Payment saved = paymentRepository.save(payment);
 
-		return toResponse(savedPayment);
+		log.info("Payment {} successful for orderId={}", saved.getId(), orderId);
+
+		return toResponse(saved);
 	}
 
 	/* ============================ REFUND ============================ */
@@ -99,30 +94,43 @@ public class PaymentService {
 					"Payment cannot be refunded");
 		}
 
-		// Restore stock (persist laptops)
+		// restore stock
 		order.getItems().forEach(item -> {
 			Laptop laptop = item.getLaptop();
 			laptop.setStock(laptop.getStock() + item.getQuantity());
-			laptopRepository.save(laptop);
 		});
 
-		// Update payment
 		payment.setStatus(PaymentStatus.REFUNDED);
 		payment.setRefundedAt(Instant.now());
-		paymentRepository.save(payment);
-
-		// Update order
 		order.setStatus(OrderStatus.CANCELLED);
-		orderRepository.save(order);
 
 		log.info("Payment {} refunded successfully", paymentId);
 
 		return toResponse(payment);
 	}
 
-	/* ============================ MAPPER ============================ */
+	/* ============================ PAYMENT HISTORY ============================ */
+
+	@Transactional
+	public List<PaymentResponse> getMyPayments(String username) {
+
+		log.info("Fetching payment history for user={}", username);
+
+		return paymentRepository.findByOrderUsernameOrderByPaidAtDesc(username).stream().map(this::toResponse)
+				.collect(Collectors.toList());
+	}
+
+	@Transactional
+	public List<PaymentResponse> getAllPayments() {
+
+		log.info("Fetching all payments (admin)");
+
+		return paymentRepository.findAllByOrderByPaidAtDesc().stream().map(this::toResponse)
+				.collect(Collectors.toList());
+	}
 
 	private PaymentResponse toResponse(Payment payment) {
+
 		return new PaymentResponse(payment.getId(), payment.getOrder().getId(), payment.getStatus(),
 				payment.getAmount(), payment.getPaidAt(), payment.getRefundedAt());
 	}

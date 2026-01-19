@@ -1,8 +1,11 @@
 package com.ey.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,4 +40,15 @@ public class PaymentController {
 		return ResponseEntity.ok(paymentService.refund(currentUser(), paymentId));
 	}
 
+	@PreAuthorize("hasRole('CUSTOMER')")
+	@GetMapping
+	public ResponseEntity<List<PaymentResponse>> myPayments() {
+		return ResponseEntity.ok(paymentService.getMyPayments(currentUser()));
+	}
+
+	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/admin")
+	public ResponseEntity<List<PaymentResponse>> allPayments() {
+		return ResponseEntity.ok(paymentService.getAllPayments());
+	}
 }
