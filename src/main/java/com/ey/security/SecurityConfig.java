@@ -53,8 +53,8 @@ public class SecurityConfig {
 				// ============================
 				.authorizeHttpRequests(auth -> auth
 
-						// Auth
-						.requestMatchers("/auth/login").permitAll()
+						// PUBLIC
+						.requestMatchers("/auth/login", "/users/register").permitAll()
 
 						// CUSTOMER
 						.requestMatchers("/api/cart/**", "/api/orders/**").hasAuthority("ROLE_CUSTOMER")
@@ -65,12 +65,11 @@ public class SecurityConfig {
 						// ADMIN
 						.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 
-						// Public APIs
+						// Public read
 						.requestMatchers(HttpMethod.GET, "/api/brands/**", "/api/laptops/**").permitAll()
-
 						.requestMatchers(HttpMethod.POST, "/api/laptops/search").permitAll()
 
-						// Docs & health
+						// Docs
 						.requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 						.permitAll()
 

@@ -5,19 +5,7 @@ import java.util.Set;
 
 import com.ey.enums.UserStatus;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = "username"),
@@ -35,7 +23,7 @@ public class User {
 	private String email;
 
 	@Column(nullable = false)
-	private String password; // BCrypt hash
+	private String password;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
@@ -79,11 +67,31 @@ public class User {
 		return roles;
 	}
 
-	public void addRole(Role role) {
-		this.roles.add(role);
-	}
-
 	public void setStatus(UserStatus status) {
 		this.status = status;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public void setRoles(Set<Role> roles) {
+		this.roles = roles;
+	}
+
+	public void addRole(Role role) {
+		this.roles.add(role);
 	}
 }
