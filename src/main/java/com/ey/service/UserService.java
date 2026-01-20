@@ -81,6 +81,24 @@ public class UserService {
 		user.setPassword(passwordEncoder.encode(request.getNewPassword()));
 	}
 
+	public UserResponse getUserById(Long id) {
+		User user = userRepository.findById(id).orElseThrow(
+				() -> new ApiException(ApiErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND, "User not found"));
+
+		return new UserResponse(user);
+	}
+
+	public void updateUserRole(Long id, String roleName) {
+
+		User user = userRepository.findById(id).orElseThrow(
+				() -> new ApiException(ApiErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND, "User not found"));
+
+		Role role = roleRepository.findByName(roleName).orElseThrow(() -> new RuntimeException("Role not found"));
+
+		user.getRoles().clear();
+		user.addRole(role);
+	}
+
 	/* ============================ ADMIN ============================ */
 
 	public List<UserResponse> getAllUsers() {

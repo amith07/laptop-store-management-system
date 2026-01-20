@@ -1,228 +1,208 @@
 # Laptop Store Management System
 
-## Overview
-
-The **Laptop Store Management System** is a REST-only backend application built using **Spring Boot 3.x** and **Java 17**. It provides a role-based platform for managing laptop brands, products, carts, orders, and payments.
-
-The system is designed with **clean layered architecture**, strong separation of concerns, and is fully testable via **Postman**.
+A Spring Boot–based RESTful backend for managing an online laptop store.
+The system supports product catalog management, cart and order processing, payments, and secure role-based access using JWT authentication.
 
 ---
 
-## Tech Stack
+## 🛠 Tech Stack
 
 * Java 17
 * Spring Boot 3.x
-* Spring Data JPA
-* Spring Security (HTTP Basic Auth)
+* Spring Security (JWT, stateless)
+* Spring Data JPA (Hibernate)
 * MySQL
 * Maven
+* Swagger / OpenAPI
 
 ---
 
-## Architecture
+## 🔐 Authentication & Authorization
 
-The application follows a strict layered architecture:
+* Stateless JWT authentication
+* Login endpoint issues JWT tokens
+* Role-based access control using authorities
 
-```
-controller   -> REST endpoints only
-service      -> Business logic & validation
-repository   -> Data access (JPA)
-model        -> JPA entities
-dto          -> Request / Response payloads
-security     -> Authentication & authorization
-config       -> Application & security configuration
-exception    -> Centralized error handling
-```
+### Roles
 
-**Rules enforced:**
-
-* No business logic in controllers
-* Validation handled in services
-* No raw exceptions returned to clients
+* CUSTOMER
+* MANAGER
+* ADMIN
 
 ---
 
-## Roles & Access Control
+## 👤 User Management
 
-The system supports three roles:
+### Public
 
-| Role     | Description                         |
-| -------- | ----------------------------------- |
-| ADMIN    | Full system access                  |
-| MANAGER  | Inventory and order management      |
-| CUSTOMER | Shopping, cart, and order placement |
+* Register new customer accounts
 
-**Role hierarchy:**
+### Authenticated Users
 
-```
-ADMIN > MANAGER > CUSTOMER
-```
+* View own profile
+* Update profile
+* Change password
 
-Authentication is handled using **HTTP Basic Authentication**.
+### Admin
 
----
-
-## Modules Implemented
-
-### 1. Security
-
-* Role-based access control
-* Method-level security using annotations
-* Public and protected endpoints explicitly defined
+* View users
+* Update user role
+* Activate / deactivate users
 
 ---
 
-### 2. Brand Module
+## 🏷️ Brand Management
 
-**Purpose:** Manage laptop brands
+* Update brand details
+* Soft delete and restore brands
+* Public brand listing supported
 
-**Features:**
-
-* Create brand (ADMIN / MANAGER)
-* Get all brands (Public)
-* Get brand by ID (Public)
-* Delete brand (ADMIN)
+Access controlled for ADMIN / MANAGER.
 
 ---
 
-### 3. Laptop Module
+## 💻 Laptop Management
 
-**Purpose:** Manage laptop inventory
+* Update laptop details and stock
+* Soft delete and restore laptops
+* Search laptops (public)
 
-**Features:**
-
-* Add laptop (ADMIN / MANAGER)
-* Update laptop (ADMIN / MANAGER)
-* Delete laptop (ADMIN)
-* Get all laptops (Public)
-* Get laptop by ID (Public)
-* Get laptops by brand (Public)
-
-Laptop data includes price, stock quantity, brand association, and specifications.
+Stock level automatically updates laptop availability status.
 
 ---
 
-### 4. Cart Module
+## 🛒 Cart Management (CUSTOMER)
 
-**Purpose:** Customer shopping cart management
+* Add items to cart
+* Update item quantity
+* Remove items
+* View active cart
 
-**Features:**
-
-* Add laptop to cart (CUSTOMER)
-* Update item quantity (CUSTOMER)
-* Remove item from cart (CUSTOMER)
-* View cart (CUSTOMER)
-
-Each cart is associated with the authenticated customer.
+Only one active cart per customer is allowed.
 
 ---
 
-### 5. Order Module
+## 📦 Order Management
 
-**Purpose:** Order processing and management
+### Customer
 
-**Controller separation by role:**
+* Place order (checkout)
+* Cancel eligible orders
+* View orders by status
 
-* Customer Order Controller
-* Manager Order Controller
-* Admin Order Controller
+### Manager
 
-**Features:**
-
-* Place order from cart (CUSTOMER)
-* View own orders (CUSTOMER)
-* Update order status (MANAGER / ADMIN)
-* View all orders (ADMIN)
-
-Order lifecycle is managed through well-defined statuses.
+* View pending orders
+* View today’s orders
 
 ---
 
-### 6. Payment Module
+## 💳 Payment Management
 
-**Purpose:** Handle order payments
+### Customer
 
-**Features:**
+* Pay for orders
+* Request refunds
+* View own payment history
 
-* Make payment for an order (CUSTOMER)
-* View payment details
-* Track payment status
+### Admin
 
-> Note: Payment logic is internal and does not integrate with external gateways (capstone scope).
+* View all payments
+* Filter payments by status
+
+Payments support:
+
+* PENDING
+* SUCCESS
+* REFUNDED
+* FAILED
 
 ---
 
-## Exception Handling
+## 📡 API Endpoints (Current Implementation)
 
-* Centralized exception handling
-* Custom business exceptions
-* Meaningful HTTP status codes returned
-* Consistent error response structure
+### Authentication
+
+* POST /auth/login
+
+### Users
+
+* POST /users/register
+* GET /users/me
+* PUT /users/me
+* PUT /users/me/password
+
+### Admin – Users
+
+* GET /api/admin/users/{id}
+* PUT /api/admin/users/{id}/role
+* PUT /api/admin/users/{id}/status
+
+### Brands
+
+* PUT /api/brands/{id}
+* DELETE /api/brands/{id}
+* POST /api/brands/{id}/restore
+
+### Laptops
+
+* PUT /api/laptops/{id}
+* PATCH /api/laptops/{id}/stock
+* DELETE /api/laptops/{id}
+* POST /api/laptops/{id}/restore
+* POST /api/laptops/search
+
+### Cart (CUSTOMER)
+
+* POST /api/cart/items
+* PATCH /api/cart/items/{laptopId}
+* DELETE /api/cart/items/{laptopId}
+* GET /api/cart/view
+
+### Orders
+
+* POST /api/orders/{orderId}/cancel
+* GET /api/orders/status/{status}
+* GET /api/manager/orders/pending
+* GET /api/manager/orders/today
+
+### Payments
+
+* POST /api/payments/orders/{orderId}
+* POST /api/payments/{paymentId}/refund
+* GET /api/payments
+* GET /api/payments/status/{status}
+* GET /api/payments/admin
+
+### Utility
+
+* GET /ping
 
 ---
 
-## Database
+## 🗄️ Database Notes
 
 * MySQL database
-* JPA/Hibernate used for ORM
-* Proper entity relationships defined
+* Soft delete implemented for brands and laptops
+* DataInitializer seeds roles and default users
+* JPA lifecycle hooks used for auditing and pricing logic
 
 ---
 
-## Running the Application
+## 🚀 Running the Application
 
-### Prerequisites
-
-* Java 17
-* Maven
-* MySQL
-
-### Steps
-
-1. Create a MySQL database
-2. Update database credentials in `application.yml`
-3. Build the project:
-
-   ```bash
-   mvn clean install
-   ```
-4. Run the application:
-
-   ```bash
+1. Configure MySQL in application.properties
+2. Set JWT secret and expiration
+3. Run:
    mvn spring-boot:run
-   ```
-
-The application starts on the configured port (default: 8080).
-
----
-
-## Testing with Postman
-
-* All endpoints are REST-based
-* Use HTTP Basic Auth
-* Set username/password according to role
-* Refer to the provided API documentation for request bodies
+4. Access APIs at:
+   [http://localhost:8080](http://localhost:8080)
 
 ---
 
-## Project Status
+## ✅ Project Status
 
-* Core modules implemented and functional
-* Role-based security enforced
-* Ready for evaluation and further enhancements
-
----
-
-## Future Enhancements (Optional)
-
-* JWT-based authentication
-* Payment gateway integration
-* Product reviews & ratings
-* Pagination and sorting
-* Unit and integration tests
-
----
-
-## Author
-
-Amith R - Capstone Project – Laptop Store Management System
+* Core business flows implemented
+* JWT security stable
+* Role-based access enforced
+* Ready for submission / evaluation

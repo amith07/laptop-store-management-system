@@ -1,15 +1,8 @@
 package com.ey.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.ey.dto.response.OrderResponse;
-import com.ey.enums.OrderStatus;
 import com.ey.service.OrderService;
 
 @RestController
@@ -22,8 +15,13 @@ public class ManagerOrderController {
 		this.orderService = orderService;
 	}
 
-	@GetMapping("/status/{status}")
-	public ResponseEntity<List<OrderResponse>> getOrdersByStatus(@PathVariable OrderStatus status) {
-		return ResponseEntity.ok(orderService.getOrdersByStatus(status));
+	@GetMapping("/pending")
+	public ResponseEntity<?> pendingOrders() {
+		return ResponseEntity.ok(orderService.getPendingOrders());
+	}
+
+	@GetMapping("/today")
+	public ResponseEntity<?> todaysOrders() {
+		return ResponseEntity.ok(orderService.getTodaysOrders());
 	}
 }

@@ -42,4 +42,10 @@ public class OrderController {
 	public ResponseEntity<OrderResponse> cancel(@PathVariable Long orderId) {
 		return ResponseEntity.ok(orderService.cancelOrder(currentUser(), orderId));
 	}
+
+	@GetMapping("/status/{status}")
+	public ResponseEntity<?> getOrdersByStatus(@PathVariable String status) {
+		return ResponseEntity.ok(orderService.getOrdersByStatus(currentUser(), status));
+	}
+
 }

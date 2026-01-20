@@ -134,4 +134,27 @@ public class PaymentService {
 		return new PaymentResponse(payment.getId(), payment.getOrder().getId(), payment.getStatus(),
 				payment.getAmount(), payment.getPaidAt(), payment.getRefundedAt());
 	}
+
+	public List<PaymentResponse> getPaymentsByStatus(String status) {
+		return paymentRepository.findByStatus(PaymentStatus.valueOf(status)).stream().map(this::toResponse).toList();
+	}
+
+	public PaymentResponse adminRefund(Long orderId) {
+
+		Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(
+				() -> new ApiException(ApiErrorCode.PAYMENT_NOT_FOUND, HttpStatus.NOT_FOUND, "Payment not found"));
+
+		if (payment.getStatus() != PaymentStatus.SUCCESS) {
+			throw new ApiException(ApiErrorCode.INVALID_REFUND_REQUEST, HttpStatus.CONFLICT,
+					"Payment cannot be refunded");
+		}
+
+		payment.setStatus(PaymentStatus.REFUNDED);
+		payment.setRefundedAt(Instant.now());
+
+		payment.getOrder().setStatus(OrderStatus.CANCELLED);
+
+		return toResponse(payment);
+	}
+
 }

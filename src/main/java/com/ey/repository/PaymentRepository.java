@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.ey.enums.PaymentStatus;
 import com.ey.model.Payment;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -14,4 +15,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	List<Payment> findByOrderUsernameOrderByPaidAtDesc(String username);
 
 	List<Payment> findAllByOrderByPaidAtDesc();
+	
+	List<Payment> findByStatus(PaymentStatus status);
+	
 }

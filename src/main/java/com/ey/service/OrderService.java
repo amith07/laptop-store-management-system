@@ -141,6 +141,18 @@ public class OrderService {
 				.collect(Collectors.toList());
 	}
 
+	public List<Order> getOrdersByStatus(String username, String status) {
+		return orderRepository.findByUsernameAndStatus(username, OrderStatus.valueOf(status));
+	}
+
+	public List<Order> getPendingOrders() {
+		return orderRepository.findByStatus(OrderStatus.CREATED);
+	}
+
+	public List<Order> getTodaysOrders() {
+		return orderRepository.findTodayOrders();
+	}
+
 	/* ============================ ADMIN ============================ */
 
 	@Transactional(readOnly = true)

@@ -51,4 +51,10 @@ public class PaymentController {
 	public ResponseEntity<List<PaymentResponse>> allPayments() {
 		return ResponseEntity.ok(paymentService.getAllPayments());
 	}
+	
+	@GetMapping("/status/{status}")
+	public ResponseEntity<?> paymentsByStatus(@PathVariable String status) {
+		return ResponseEntity.ok(paymentService.getPaymentsByStatus(status));
+	}
+
 }

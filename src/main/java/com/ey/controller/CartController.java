@@ -48,7 +48,7 @@ public class CartController {
 		return ResponseEntity.ok(cartService.removeItem(currentUser(), laptopId));
 	}
 
-	@GetMapping
+	@GetMapping("/view")
 	public ResponseEntity<CartResponse> getCart() {
 		return ResponseEntity.ok(cartService.getCart(currentUser()));
 	}
